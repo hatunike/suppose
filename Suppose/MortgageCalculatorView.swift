@@ -58,9 +58,6 @@ struct MortgageCalculatorView: View {
             Text("Mortgage")
                 .font(.largeTitle.weight(.bold))
                 .foregroundStyle(.primary)
-            Text("Enter the numbers from your statement to see each year until the loan is paid off.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
         }
     }
 
@@ -122,7 +119,7 @@ struct MortgageCalculatorView: View {
     private var breakdown: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Yearly breakdown")
+                Text("Yearly")
                     .font(.headline)
                 Spacer()
                 Text("Principal · Interest")
