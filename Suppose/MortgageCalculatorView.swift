@@ -33,7 +33,6 @@ struct MortgageCalculatorView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                header
                 inputs
                 summary
                 if !amortization.years.isEmpty {
@@ -45,7 +44,6 @@ struct MortgageCalculatorView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Mortgage")
-        .navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.interactively)
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -54,14 +52,6 @@ struct MortgageCalculatorView: View {
                     focusedInput = nil
                 }
             }
-        }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Mortgage")
-                .font(.largeTitle.weight(.bold))
-                .foregroundStyle(.primary)
         }
     }
 

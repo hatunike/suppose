@@ -37,7 +37,6 @@ struct InvestmentCalculatorView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                header
                 inputs
                 summary
                 projectionList
@@ -47,7 +46,6 @@ struct InvestmentCalculatorView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Suppose Investment")
-        .navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.interactively)
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -56,17 +54,6 @@ struct InvestmentCalculatorView: View {
                     focusedInput = nil
                 }
             }
-        }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Suppose Investment")
-                .font(.largeTitle.weight(.bold))
-                .foregroundStyle(.primary)
-            Text("A 40-year offline projection with monthly contributions and monthly compounding.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
         }
     }
 
