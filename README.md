@@ -1,6 +1,26 @@
 # Suppose
 
-SwiftUI iOS project for the `Suppose` app.
+Suppose is a free, ad-free, offline iOS app for running personal financial what-if scenarios.
+
+The first tool is a basic investment calculator. It accepts a starting value, monthly contribution, annual interest rate, and current age, then projects the balance for each year over a 40-year horizon.
+
+## Product Principles
+
+- Free of cost.
+- No ads.
+- Offline-first with local-only data.
+- No account, syncing, cloud dependency, or telemetry requirement.
+- Designed for fast, understandable financial scenario exploration.
+
+## Architecture
+
+- `SupposeApp.swift` is the SwiftUI app entry point.
+- `ContentView.swift` owns the investment calculator screen and input state.
+- `InvestmentScenario.swift` defines the local input model.
+- `InvestmentProjection.swift` contains pure projection logic and annual output rows.
+- `SupposeTests.swift` covers the calculator behavior.
+
+Keep financial calculations in testable model/calculator types instead of embedding them directly in SwiftUI views.
 
 ## Terminal Workflow
 

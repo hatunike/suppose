@@ -2,6 +2,19 @@
 
 This project should be driven from the terminal. Do not rely on opening Xcode for normal build, test, or device workflows.
 
+## Product Context
+
+Suppose is a free, ad-free, offline financial what-if app. The app should help Charles run clear personal finance scenarios without accounts, syncing, cloud services, ads, or paid features.
+
+The first scenario tool is an investment calculator:
+
+- Inputs: starting value, monthly contribution, annual interest rate, current age.
+- Output: annual projected balances labeled by age.
+- Current horizon: 40 years.
+- Data model: local only.
+
+Maintain this product direction unless Charles explicitly changes it.
+
 ## Project
 
 - Xcode project: `Suppose.xcodeproj`
@@ -10,6 +23,13 @@ This project should be driven from the terminal. Do not rely on opening Xcode fo
 - Unit test target: `SupposeTests`
 - UI test target: `SupposeUITests`
 - Local build output: `.DerivedData/`
+
+## Architecture
+
+- Keep calculation logic in small, pure Swift types that can be tested without UI.
+- Keep SwiftUI views focused on input, layout, and presentation.
+- Document architectural changes in this file and human-facing project context in `README.md`.
+- Add or update tests when changing calculator behavior.
 
 ## Commands
 
