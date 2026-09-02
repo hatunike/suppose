@@ -66,10 +66,10 @@ struct MortgageCalculatorView: View {
 
     private var inputs: some View {
         VStack(spacing: 10) {
-            currencyField("Current principal balance", value: $principalBalance, input: .principalBalance)
-            percentField("Interest rate", value: $annualInterestRate)
-            currencyField("Monthly payment (P&I)", value: $monthlyPrincipalInterest, input: .monthlyPrincipalInterest)
-            currencyField("Additional monthly payment", value: $additionalMonthlyPayment, input: .additionalMonthlyPayment)
+            currencyField("Current Principal", value: $principalBalance, input: .principalBalance)
+            percentField("Interest", value: $annualInterestRate)
+            currencyField("Monthly (P&I)", value: $monthlyPrincipalInterest, input: .monthlyPrincipalInterest)
+            currencyField("Additional Monthly", value: $additionalMonthlyPayment, input: .additionalMonthlyPayment)
         }
         .padding(16)
         .background(.background)
