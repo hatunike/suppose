@@ -43,6 +43,8 @@ struct ContentView: View {
             switch tool {
             case .investment:
                 InvestmentCalculatorView()
+            case .mortgage:
+                MortgageCalculatorView()
             }
         }
     }
