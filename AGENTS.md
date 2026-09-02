@@ -18,8 +18,10 @@ Run these from the repository root:
 ```sh
 make destinations
 make build-simulator
+make run-simulator
 make test-simulator
 make build-device
+make run-device
 ```
 
 Defaults currently target:
@@ -30,8 +32,8 @@ Defaults currently target:
 If the local simulator or phone changes, override the destination on the command line:
 
 ```sh
-make build-simulator SIMULATOR_NAME="iPhone 17 Pro"
-make build-device DEVICE_ID=<device-udid>
+make run-simulator SIMULATOR_NAME="iPhone 17 Pro"
+make run-device DEVICE_ID=<device-udid>
 ```
 
 ## Git Hygiene
