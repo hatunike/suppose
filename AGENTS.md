@@ -13,6 +13,13 @@ The first scenario tool is an investment calculator:
 - Current horizon: 40 years.
 - Data model: local only.
 
+The second tool is a mortgage payoff calculator:
+
+- Inputs: current principal balance, annual interest rate, monthly principal-and-interest payment, additional monthly payment.
+- Output: a year-by-year amortization schedule to payoff, plus the interest and time saved by the additional payment.
+- Inputs that never reduce the balance are reported as "never pays off" rather than looping.
+- Data model: local only.
+
 The app is expected to grow into multiple tools. Keep the root navigation structure explicit and add new tools through the shared tool directory rather than replacing the first screen with a single-purpose calculator.
 
 Maintain this product direction unless Charles explicitly changes it.
@@ -32,6 +39,9 @@ Maintain this product direction unless Charles explicitly changes it.
 - Keep SwiftUI views focused on input, layout, and presentation.
 - Use `ContentView` as the top-level navigation shell and `FinancialTool` as the app's tool registry.
 - Put tool-specific UI in dedicated views such as `InvestmentCalculatorView`.
+- Each tool has a pure model/calculator pair: `InvestmentScenario`/`InvestmentProjection`, `MortgageScenario`/`MortgageAmortization`.
+- Calculator screens persist their inputs with `@AppStorage` under a per-tool key prefix (`investment.`, `mortgage.`).
+- `InvestmentCalculatorView` and `MortgageCalculatorView` currently duplicate input-field, metric, and card styling. A shared component layer is a known refactor; do not attempt it while either view has concurrent edits.
 - Document architectural changes in this file and human-facing project context in `README.md`.
 - Add or update tests when changing calculator behavior.
 

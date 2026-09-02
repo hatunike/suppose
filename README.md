@@ -2,7 +2,10 @@
 
 Suppose is a free, ad-free, offline iOS app for running personal financial what-if scenarios.
 
-The first tool is a basic investment calculator. It accepts a starting value, monthly contribution, annual interest rate, and current age, then projects the balance for each year over a 40-year horizon.
+Suppose ships with two tools:
+
+- **Investment calculator** — starting value, monthly contribution, annual interest rate, and current age, projected as an annual balance over a 40-year horizon.
+- **Mortgage calculator** — current principal, interest rate, monthly principal-and-interest payment, and an optional additional monthly payment, projected as a year-by-year payoff schedule that also reports the interest and time the extra payment saves.
 
 ## Product Principles
 
@@ -15,14 +18,15 @@ The first tool is a basic investment calculator. It accepts a starting value, mo
 ## Architecture
 
 - `SupposeApp.swift` is the SwiftUI app entry point.
-- `ContentView.swift` owns the top-level navigation structure and tool directory.
-- `FinancialTool.swift` defines the tools available in the app navigation.
-- `InvestmentCalculatorView.swift` owns the investment calculator screen and input state.
-- `InvestmentScenario.swift` defines the local input model.
-- `InvestmentProjection.swift` contains pure projection logic and annual output rows.
-- `SupposeTests.swift` covers the calculator behavior.
+- `ContentView.swift` owns the top-level navigation and tool directory.
+- `FinancialTool.swift` is the registry of tools shown in navigation.
+- `InvestmentScenario.swift` / `InvestmentProjection.swift` are the investment input model and pure projection logic.
+- `InvestmentCalculatorView.swift` is the investment calculator screen.
+- `MortgageScenario.swift` / `MortgageAmortization.swift` are the mortgage input model and pure amortization logic.
+- `MortgageCalculatorView.swift` is the mortgage calculator screen.
+- `SupposeTests.swift` covers both calculators' model logic.
 
-Keep financial calculations in testable model/calculator types instead of embedding them directly in SwiftUI views.
+Keep financial calculations in testable model/calculator types instead of embedding them directly in SwiftUI views. Each calculator screen persists its inputs with `@AppStorage` (per-tool key prefix) so the last-entered values survive navigation and relaunch.
 
 ## App Icon
 
