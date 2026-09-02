@@ -82,3 +82,18 @@ xcrun devicectl list devices
 - Commit intentional changes with clear messages.
 - Do not commit `.DerivedData/`, `build/`, `xcuserdata/`, or other local Xcode state.
 - Before committing, inspect `git status --short` and verify the terminal build or explain why it was not run.
+
+## Multi-Agent Git Workflow
+
+Multiple agents may work in this repository at the same time. Treat every uncommitted change you did not make as someone else's work.
+
+- Start each task with `git status --short --branch` and inspect relevant files before editing.
+- Keep changes scoped to the user request. Avoid opportunistic refactors while other agents are active.
+- Before editing a file with existing uncommitted changes, read the file and its diff. Work with those changes instead of overwriting them.
+- Do not revert, delete, reformat, or restage another agent's work unless Charles explicitly asks.
+- Stage only your own changes. Prefer explicit path staging such as `git add path/to/file.swift`; use patch staging when a file contains mixed ownership.
+- Before committing, review `git diff --cached --stat` and `git diff --cached --name-only` to confirm the commit contains only the intended files.
+- Use professional, imperative commit subjects that describe the completed change, for example `Add investment calculator` or `Fix device build destination`.
+- Keep commits logical and reviewable. Do not create noisy WIP commits unless Charles asks for a checkpoint.
+- If concurrent changes make a clean commit impossible, stop and explain the conflict instead of guessing ownership.
+- After committing, confirm `git status --short --branch` and report any remaining uncommitted changes that belong to other work.
