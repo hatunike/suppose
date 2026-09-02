@@ -1,44 +1,12 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var startingValue = 10000.0
-    @State private var monthlyContribution = 500.0
-    @State private var annualInterestRate = 7.0
-    @State private var currentAge = 35
-
-    private var scenario: InvestmentScenario {
-        InvestmentScenario(
-            startingValue: startingValue,
-            monthlyContribution: monthlyContribution,
-            annualInterestRate: annualInterestRate,
-            currentAge: currentAge
-        )
-    }
-
-    private var projection: [InvestmentProjectionYear] {
-        InvestmentProjectionCalculator.projection(for: scenario)
-    }
-
-    private var finalBalance: Double {
-        projection.last?.balance ?? startingValue
-    }
-
-    private var totalContributed: Double {
-        projection.last?.contributed ?? startingValue
-    }
-
-    private var totalGrowth: Double {
-        max(0, finalBalance - totalContributed)
-    }
-
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     header
-                    inputs
-                    summary
-                    projectionList
+                    toolList
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 24)
@@ -51,169 +19,64 @@ struct ContentView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Investment what-if")
+            Text("Financial what-ifs")
                 .font(.largeTitle.weight(.bold))
-                .foregroundStyle(.primary)
-            Text("A 40-year offline projection with monthly contributions and monthly compounding.")
+            Text("Local, offline tools for exploring personal finance scenarios.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
     }
 
-    private var inputs: some View {
-        VStack(spacing: 12) {
-            currencyField("Starting value", value: $startingValue)
-            currencyField("Monthly contribution", value: $monthlyContribution)
-            percentField("Annual interest rate", value: $annualInterestRate)
-            ageStepper
-        }
-        .padding(16)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-
-    private var summary: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Projected outcome")
+    private var toolList: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Tools")
                 .font(.headline)
 
-            HStack(spacing: 12) {
-                metric("Final balance", value: finalBalance, style: .currency)
-                metric("Contributed", value: totalContributed, style: .currency)
-            }
-
-            metric("Estimated growth", value: totalGrowth, style: .currency)
-        }
-        .padding(16)
-        .background(
-            LinearGradient(
-                colors: [Color.teal.opacity(0.18), Color.indigo.opacity(0.14)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-
-    private var projectionList: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Annual balances")
-                    .font(.headline)
-                Spacer()
-                Text("Age \(currentAge + 1)-\(currentAge + scenario.projectionYears)")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
-            }
-
-            LazyVStack(spacing: 8) {
-                ForEach(projection) { row in
-                    ProjectionRow(row: row, finalBalance: finalBalance)
+            ForEach(FinancialTool.allCases) { tool in
+                NavigationLink(value: tool) {
+                    ToolCard(tool: tool)
                 }
+                .buttonStyle(.plain)
             }
         }
-    }
-
-    private var ageStepper: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Current age")
-                    .font(.subheadline.weight(.semibold))
-                Text("Used to label each projection year")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        .navigationDestination(for: FinancialTool.self) { tool in
+            switch tool {
+            case .investment:
+                InvestmentCalculatorView()
             }
-            Spacer()
-            Stepper(value: $currentAge, in: 0...120) {
-                Text(currentAge, format: .number)
-                    .font(.headline.monospacedDigit())
-                    .frame(minWidth: 40, alignment: .trailing)
-            }
-            .fixedSize()
-        }
-    }
-
-    private func currencyField(_ title: String, value: Binding<Double>) -> some View {
-        LabeledContent {
-            TextField(title, value: value, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .font(.headline.monospacedDigit())
-        } label: {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-        }
-    }
-
-    private func percentField(_ title: String, value: Binding<Double>) -> some View {
-        LabeledContent {
-            HStack(spacing: 4) {
-                TextField(title, value: value, format: .number.precision(.fractionLength(0...2)))
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.trailing)
-                    .font(.headline.monospacedDigit())
-                Text("%")
-                    .foregroundStyle(.secondary)
-            }
-        } label: {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-        }
-    }
-
-    private func metric(_ title: String, value: Double, style: MetricStyle) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(title)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.secondary)
-            Text(formatted(value, style: style))
-                .font(.title3.weight(.bold).monospacedDigit())
-                .minimumScaleFactor(0.72)
-                .lineLimit(1)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func formatted(_ value: Double, style: MetricStyle) -> String {
-        switch style {
-        case .currency:
-            value.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD").precision(.fractionLength(0)))
         }
     }
 }
 
-private enum MetricStyle {
-    case currency
-}
-
-private struct ProjectionRow: View {
-    let row: InvestmentProjectionYear
-    let finalBalance: Double
+private struct ToolCard: View {
+    let tool: FinancialTool
 
     var body: some View {
         HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Year \(row.year)")
-                    .font(.subheadline.weight(.semibold))
-                Text("Age \(row.age)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(width: 76, alignment: .leading)
+            Image(systemName: tool.symbolName)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(Color.teal)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
             VStack(alignment: .leading, spacing: 5) {
-                Text(row.balance.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD").precision(.fractionLength(0))))
-                    .font(.headline.monospacedDigit())
-                ProgressView(value: row.balance, total: max(finalBalance, 1))
-                    .tint(.teal)
+                Text(tool.title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Text(tool.subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
-            Text(row.contributed.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD").precision(.fractionLength(0))))
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
-                .frame(width: 82, alignment: .trailing)
+            Spacer(minLength: 8)
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.tertiary)
         }
-        .padding(14)
+        .padding(16)
         .background(.background)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
