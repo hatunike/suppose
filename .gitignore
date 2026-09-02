@@ -1,0 +1,17 @@
+.DS_Store
+
+# Xcode local state and build products
+.DerivedData/
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+
+# Swift Package Manager
+.build/
+Package.resolved
+
+# App distribution artifacts
+*.ipa
+*.dSYM.zip
