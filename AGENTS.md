@@ -17,6 +17,7 @@ Run these from the repository root:
 
 ```sh
 make destinations
+make devices
 make build-simulator
 make run-simulator
 make test-simulator
@@ -27,13 +28,20 @@ make run-device
 Defaults currently target:
 
 - Simulator: `iPhone 17`, `OS=latest`
-- Connected iPhone: `00008130-0001484A2604001C` (`Charles's iPhone (2)`)
+- Connected iPhone: `3948391A-B03C-5562-9E2D-B1495FC9574B` (`Charles's iPhone (2)`)
+- Device builds use `generic/platform=iOS`; install and launch use `DEVICE_ID`.
 
 If the local simulator or phone changes, override the destination on the command line:
 
 ```sh
 make run-simulator SIMULATOR_NAME="iPhone 17 Pro"
 make run-device DEVICE_ID=<device-udid>
+```
+
+If `run-device` fails, inspect device availability with:
+
+```sh
+xcrun devicectl list devices
 ```
 
 ## Git Hygiene

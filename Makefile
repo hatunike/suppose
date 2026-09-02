@@ -5,9 +5,9 @@ CONFIGURATION ?= Debug
 DERIVED_DATA := .DerivedData
 
 # Current known local destinations. Override from the command line if needed:
-#   make build-device DEVICE_ID=<device-udid>
+#   make run-device DEVICE_ID=<device-id-or-name>
 #   make build-simulator SIMULATOR_NAME="iPhone 17 Pro"
-DEVICE_ID ?= 00008130-0001484A2604001C
+DEVICE_ID ?= 3948391A-B03C-5562-9E2D-B1495FC9574B
 SIMULATOR_NAME ?= iPhone 17
 SIMULATOR_OS ?= latest
 
@@ -17,12 +17,13 @@ XCODEBUILD := xcodebuild \
 	-configuration "$(CONFIGURATION)" \
 	-derivedDataPath "$(DERIVED_DATA)"
 
-.PHONY: help destinations build-simulator run-simulator build-device run-device test-simulator clean
+.PHONY: help destinations devices build-simulator run-simulator build-device run-device test-simulator clean
 
 help:
 	@printf "Suppose terminal commands\n"
 	@printf "\n"
 	@printf "  make destinations       List devices and simulators Xcode can target\n"
+	@printf "  make devices            List devices visible to xcrun devicectl\n"
 	@printf "  make build-simulator    Build for the iOS Simulator (%s, OS=%s)\n" "$(SIMULATOR_NAME)" "$(SIMULATOR_OS)"
 	@printf "  make run-simulator      Build, install, and launch on the iOS Simulator\n"
 	@printf "  make test-simulator     Run tests on the iOS Simulator (%s, OS=%s)\n" "$(SIMULATOR_NAME)" "$(SIMULATOR_OS)"
@@ -32,6 +33,9 @@ help:
 
 destinations:
 	xcodebuild -project "$(PROJECT)" -scheme "$(SCHEME)" -showdestinations
+
+devices:
+	xcrun devicectl list devices
 
 build-simulator:
 	$(XCODEBUILD) -destination "platform=iOS Simulator,name=$(SIMULATOR_NAME),OS=$(SIMULATOR_OS)" build
@@ -45,7 +49,7 @@ test-simulator:
 	$(XCODEBUILD) -destination "platform=iOS Simulator,name=$(SIMULATOR_NAME),OS=$(SIMULATOR_OS)" test
 
 build-device:
-	$(XCODEBUILD) -destination "platform=iOS,id=$(DEVICE_ID)" -allowProvisioningUpdates build
+	$(XCODEBUILD) -destination "generic/platform=iOS" -allowProvisioningUpdates build
 
 run-device: build-device
 	xcrun devicectl device install app --device "$(DEVICE_ID)" "$(DERIVED_DATA)/Build/Products/$(CONFIGURATION)-iphoneos/$(SCHEME).app"
