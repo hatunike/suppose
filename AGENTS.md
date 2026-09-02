@@ -13,6 +13,8 @@ The first scenario tool is an investment calculator:
 - Current horizon: 40 years.
 - Data model: local only.
 
+The app is expected to grow into multiple tools. Keep the root navigation structure explicit and add new tools through the shared tool directory rather than replacing the first screen with a single-purpose calculator.
+
 Maintain this product direction unless Charles explicitly changes it.
 
 ## Project
@@ -28,8 +30,18 @@ Maintain this product direction unless Charles explicitly changes it.
 
 - Keep calculation logic in small, pure Swift types that can be tested without UI.
 - Keep SwiftUI views focused on input, layout, and presentation.
+- Use `ContentView` as the top-level navigation shell and `FinancialTool` as the app's tool registry.
+- Put tool-specific UI in dedicated views such as `InvestmentCalculatorView`.
 - Document architectural changes in this file and human-facing project context in `README.md`.
 - Add or update tests when changing calculator behavior.
+
+## App Icon
+
+- Source art: `Design/AppIcon/AppIcon-{light,dark,tinted}.svg`.
+- Compiled assets: `Suppose/Assets.xcassets/AppIcon.appiconset/` (1024x1024 PNG
+  per appearance, single-size format).
+- To change the icon, edit the SVGs and regenerate the PNGs with the
+  `rsvg-convert` loop documented in `Design/AppIcon/README.md`.
 
 ## Commands
 

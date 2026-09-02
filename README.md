@@ -15,12 +15,21 @@ The first tool is a basic investment calculator. It accepts a starting value, mo
 ## Architecture
 
 - `SupposeApp.swift` is the SwiftUI app entry point.
-- `ContentView.swift` owns the investment calculator screen and input state.
+- `ContentView.swift` owns the top-level navigation structure and tool directory.
+- `FinancialTool.swift` defines the tools available in the app navigation.
+- `InvestmentCalculatorView.swift` owns the investment calculator screen and input state.
 - `InvestmentScenario.swift` defines the local input model.
 - `InvestmentProjection.swift` contains pure projection logic and annual output rows.
 - `SupposeTests.swift` covers the calculator behavior.
 
 Keep financial calculations in testable model/calculator types instead of embedding them directly in SwiftUI views.
+
+## App Icon
+
+The icon shows three curves fanning upward from a shared origin: one starting
+point projected forward under different assumptions. Editable source art and a
+regeneration script live in `Design/AppIcon/`; the rendered 1024x1024 light,
+dark, and tinted variants live in `Suppose/Assets.xcassets/AppIcon.appiconset/`.
 
 ## Terminal Workflow
 
