@@ -113,4 +113,68 @@ struct SupposeTests {
         #expect(amortization.years.isEmpty)
         #expect(amortization.monthsToPayoff == 0)
     }
+
+    @Test func mortgagePartialFinalYearIsIncluded() {
+        let scenario = MortgageScenario(
+            principalBalance: 25_000,
+            annualInterestRate: 0,
+            monthlyPrincipalInterest: 1_000,
+            additionalMonthlyPayment: 0
+        )
+
+        let amortization = MortgageAmortizationCalculator.amortization(for: scenario)
+
+        #expect(amortization.monthsToPayoff == 25)
+        #expect(amortization.years.count == 3)
+        #expect(amortization.years.last?.year == 3)
+        #expect(amortization.years.last?.endingBalance == 0)
+        #expect(amortization.years.last?.principalReduction == 1_000)
+    }
+
+    @Test func mortgageLargeAdditionalPaymentPaysOffWithoutOvershoot() {
+        let scenario = MortgageScenario(
+            principalBalance: 100_000,
+            annualInterestRate: 5,
+            monthlyPrincipalInterest: 600,
+            additionalMonthlyPayment: 200_000
+        )
+
+        let amortization = MortgageAmortizationCalculator.amortization(for: scenario)
+
+        #expect(amortization.isPaidOff)
+        #expect(amortization.monthsToPayoff == 1)
+        #expect(amortization.years.count == 1)
+        #expect(abs(amortization.scheduledPrincipal + amortization.additionalPrincipal - 100_000) < 0.01)
+        #expect(amortization.additionalPrincipal < 100_000)
+    }
+
+    @Test func mortgageComparisonHandlesBaselineThatNeverPaysOff() {
+        let scenario = MortgageScenario(
+            principalBalance: 300_000,
+            annualInterestRate: 7,
+            monthlyPrincipalInterest: 1_000,
+            additionalMonthlyPayment: 2_000
+        )
+
+        let comparison = MortgageAmortizationCalculator.comparison(for: scenario)
+
+        #expect(comparison.accelerated.isPaidOff)
+        #expect(!comparison.baseline.isPaidOff)
+        #expect(comparison.interestSaved == 0)
+        #expect(comparison.monthsSaved == 0)
+    }
+
+    @Test func mortgageScenarioClampsNegativeInputs() {
+        let scenario = MortgageScenario(
+            principalBalance: -50_000,
+            annualInterestRate: -3,
+            monthlyPrincipalInterest: -100,
+            additionalMonthlyPayment: -25
+        )
+
+        #expect(scenario.principalBalance == 0)
+        #expect(scenario.annualInterestRate == 0)
+        #expect(scenario.monthlyPrincipalInterest == 0)
+        #expect(scenario.additionalMonthlyPayment == 0)
+    }
 }

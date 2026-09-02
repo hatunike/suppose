@@ -36,7 +36,7 @@ struct MortgageCalculatorView: View {
                 header
                 inputs
                 summary
-                if amortization.isPaidOff {
+                if !amortization.years.isEmpty {
                     breakdown
                 }
             }
@@ -86,7 +86,7 @@ struct MortgageCalculatorView: View {
                     metric("Total interest", text: currency(amortization.totalInterest))
                 }
 
-                if additionalMonthlyPayment > 0 {
+                if additionalMonthlyPayment > 0 && comparison.baseline.isPaidOff {
                     metric("Interest saved", text: currency(comparison.interestSaved))
                     Text(savingsSentence)
                         .font(.footnote)
@@ -94,6 +94,12 @@ struct MortgageCalculatorView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     metric("Total paid", text: currency(amortization.totalPaid))
+                    if additionalMonthlyPayment > 0 {
+                        Text("Without the additional payment, this balance never pays off.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
             .padding(16)
