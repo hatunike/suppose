@@ -160,8 +160,8 @@ struct MortgageCalculatorView: View {
 
     private func currencyField(_ title: String, value: Binding<Double>, input: MortgageInput) -> some View {
         LabeledContent {
-            TextField(title, value: value, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                .keyboardType(.decimalPad)
+            TextField(title, value: value, format: .currency(code: Locale.current.currency?.identifier ?? "USD").precision(.fractionLength(0)))
+                .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
                 .font(.headline.monospacedDigit())
                 .focused($focusedInput, equals: input)
