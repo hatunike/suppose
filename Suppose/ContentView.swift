@@ -4,26 +4,12 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    header
-                    toolList
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 24)
+                toolList
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 24)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Suppose")
-            .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Financial what-ifs")
-                .font(.largeTitle.weight(.bold))
-            Text("Local, offline tools for exploring personal finance scenarios.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
         }
     }
 
