@@ -26,6 +26,10 @@ struct MortgageCalculatorView: View {
         comparison.accelerated
     }
 
+    private var currentYear: Int {
+        Calendar.current.component(.year, from: .now)
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
@@ -129,7 +133,11 @@ struct MortgageCalculatorView: View {
 
             LazyVStack(spacing: 8) {
                 ForEach(amortization.years) { year in
-                    AmortizationRow(year: year, originalBalance: scenario.principalBalance)
+                    AmortizationRow(
+                        year: year,
+                        originalBalance: scenario.principalBalance,
+                        startYear: currentYear
+                    )
                 }
             }
         }
@@ -213,6 +221,7 @@ private enum MortgageInput: Hashable {
 private struct AmortizationRow: View {
     let year: MortgageAmortizationYear
     let originalBalance: Double
+    let startYear: Int
 
     private var paidOff: Double {
         max(0, originalBalance - year.endingBalance)
@@ -220,9 +229,14 @@ private struct AmortizationRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Text("Year \(year.year)")
-                .font(.subheadline.weight(.semibold))
-                .frame(width: 60, alignment: .leading)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Year \(year.year)")
+                    .font(.subheadline.weight(.semibold))
+                Text(verbatim: "\(startYear + year.year - 1)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(width: 76, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 5) {
                 Text(currency(year.endingBalance))
