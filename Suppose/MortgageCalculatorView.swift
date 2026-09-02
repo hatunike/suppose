@@ -1,10 +1,12 @@
 import SwiftUI
 
 struct MortgageCalculatorView: View {
-    @State private var principalBalance = 320_000.0
-    @State private var annualInterestRate = 6.5
-    @State private var monthlyPrincipalInterest = 2_100.0
-    @State private var additionalMonthlyPayment = 200.0
+    // Inputs are stored in UserDefaults so they survive navigation and app relaunches;
+    // each field keeps whatever the user last entered.
+    @AppStorage("mortgage.principalBalance") private var principalBalance = 320_000.0
+    @AppStorage("mortgage.annualInterestRate") private var annualInterestRate = 6.5
+    @AppStorage("mortgage.monthlyPrincipalInterest") private var monthlyPrincipalInterest = 2_100.0
+    @AppStorage("mortgage.additionalMonthlyPayment") private var additionalMonthlyPayment = 200.0
     @FocusState private var focusedInput: MortgageInput?
 
     private var scenario: MortgageScenario {
