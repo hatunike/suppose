@@ -1,10 +1,12 @@
 import SwiftUI
 
 struct InvestmentCalculatorView: View {
-    @State private var startingValue = 10000.0
-    @State private var monthlyContribution = 500.0
-    @State private var annualInterestRate = 7.0
-    @State private var currentAge = 35
+    // Inputs are stored in UserDefaults so they survive navigation and app relaunches;
+    // each field keeps whatever the user last entered.
+    @AppStorage("investment.startingValue") private var startingValue = 10000.0
+    @AppStorage("investment.monthlyContribution") private var monthlyContribution = 500.0
+    @AppStorage("investment.annualInterestRate") private var annualInterestRate = 7.0
+    @AppStorage("investment.currentAge") private var currentAge = 35
     @FocusState private var focusedInput: InvestmentInput?
 
     private var scenario: InvestmentScenario {
