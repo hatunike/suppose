@@ -31,6 +31,8 @@ struct ContentView: View {
                 InvestmentCalculatorView()
             case .mortgage:
                 MortgageCalculatorView()
+            case .contributionRoom:
+                ContributionRoomCalculatorView()
             }
         }
     }

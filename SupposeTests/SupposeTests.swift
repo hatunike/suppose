@@ -107,6 +107,33 @@ struct SupposeTests {
         #expect(comparison.monthsSaved > 0)
     }
 
+    @Test func mortgageInvestedInsteadMatchesAnnuityFutureValue() {
+        let scenario = MortgageScenario(
+            principalBalance: 300_000,
+            annualInterestRate: 6,
+            monthlyPrincipalInterest: 1_800,
+            additionalMonthlyPayment: 200
+        )
+        let comparison = MortgageAmortizationCalculator.comparison(for: scenario)
+
+        let monthlyRate = 0.07 / 12
+        let months = Double(comparison.baseline.monthsToPayoff)
+        let expected = 200 * (pow(1 + monthlyRate, months) - 1) / monthlyRate
+        #expect(abs(comparison.investedInstead(annualReturn: 0.07) - expected) < 0.01)
+        #expect(comparison.baseline.monthsToPayoff > comparison.accelerated.monthsToPayoff)
+    }
+
+    @Test func mortgageInvestedInsteadIsZeroWithNoAdditionalPayment() {
+        let scenario = MortgageScenario(
+            principalBalance: 300_000,
+            annualInterestRate: 6,
+            monthlyPrincipalInterest: 1_800,
+            additionalMonthlyPayment: 0
+        )
+        let comparison = MortgageAmortizationCalculator.comparison(for: scenario)
+        #expect(comparison.investedInstead(annualReturn: 0.07) == 0)
+    }
+
     @Test func mortgagePaymentBelowInterestNeverPaysOff() {
         let scenario = MortgageScenario(
             principalBalance: 300_000,
