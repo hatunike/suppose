@@ -143,7 +143,9 @@ struct MortgageCalculatorView: View {
         let extra = currency(additionalMonthlyPayment)
         let time = payoffText(months: comparison.monthsSaved)
         let interest = currency(comparison.interestSaved)
-        return "Paying \(extra) extra each month clears the loan \(time) sooner and saves \(interest) in interest."
+        let invested = currency(comparison.investedInstead(annualReturn: MortgageAmortizationCalculator.opportunityCostRealReturn))
+        let originalTerm = payoffText(months: comparison.baseline.monthsToPayoff)
+        return "Paying \(extra) extra each month clears the loan \(time) sooner and saves \(interest) in interest. Invested instead at a 7% real return over the loan's original \(originalTerm) term, that money would grow to \(invested)."
     }
 
     private func metric(_ title: String, text: String) -> some View {

@@ -41,6 +41,9 @@ struct MortgageAmortization: Equatable {
 struct MortgagePayoffComparison: Equatable {
     let accelerated: MortgageAmortization
     let baseline: MortgageAmortization
+    /// The additional monthly payment being compared against, so the opportunity-cost
+    /// alternative (investing it instead) can be computed without re-deriving it from a scenario.
+    let extraMonthlyPayment: Double
 
     var interestSaved: Double {
         max(0, baseline.totalInterest - accelerated.totalInterest)
@@ -49,11 +52,26 @@ struct MortgagePayoffComparison: Equatable {
     var monthsSaved: Int {
         max(0, baseline.monthsToPayoff - accelerated.monthsToPayoff)
     }
+
+    /// The future value of investing `extraMonthlyPayment` every month at `annualReturn`
+    /// instead of paying it toward the mortgage. Compounded over the *baseline* payoff
+    /// period (the loan's original, unaccelerated life): in the world where that money is
+    /// invested rather than prepaid, the mortgage is never accelerated, so the minimum
+    /// payment — and the freed-up extra dollars — keep going for the loan's full original term.
+    func investedInstead(annualReturn: Double) -> Double {
+        guard extraMonthlyPayment > 0, baseline.monthsToPayoff > 0 else { return 0 }
+        let monthlyRate = annualReturn / 12
+        let months = Double(baseline.monthsToPayoff)
+        guard monthlyRate != 0 else { return extraMonthlyPayment * months }
+        return extraMonthlyPayment * (pow(1 + monthlyRate, months) - 1) / monthlyRate
+    }
 }
 
 enum MortgageAmortizationCalculator {
     /// 100 years. A schedule that has not paid off by here is treated as never paying off.
     private static let maxMonths = 1_200
+    /// Assumed long-run real (inflation-adjusted) return for the "invested instead" comparison.
+    static let opportunityCostRealReturn = 0.07
 
     static func amortization(for scenario: MortgageScenario) -> MortgageAmortization {
         guard scenario.principalBalance > 0 else {
@@ -141,7 +159,8 @@ enum MortgageAmortizationCalculator {
 
         return MortgagePayoffComparison(
             accelerated: amortization(for: scenario),
-            baseline: amortization(for: baselineScenario)
+            baseline: amortization(for: baselineScenario),
+            extraMonthlyPayment: scenario.additionalMonthlyPayment
         )
     }
 }

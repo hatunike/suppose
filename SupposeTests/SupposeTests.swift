@@ -212,4 +212,134 @@ struct SupposeTests {
         #expect(scenario.monthlyPrincipalInterest == 0)
         #expect(scenario.additionalMonthlyPayment == 0)
     }
+
+    private func contributionScenario(
+        filingStatus: FilingStatus = .marriedFilingJointly,
+        ageOne: Int = 40,
+        ageTwo: Int = 38,
+        incomeOne: Double = 200_000,
+        incomeTwo: Double = 100_000,
+        planOne: Bool = true,
+        planTwo: Bool = false,
+        employerOne: Double = 0,
+        rothPercentOne: Double = 0,
+        iraOne: IRAChoice = .roth,
+        iraTwo: IRAChoice = .roth,
+        magi: Double = 100_000,
+        hsa: HSACoverage = .none,
+        afterTaxOne: Bool = true,
+        afterTaxTwo: Bool = true
+    ) -> ContributionRoomScenario {
+        ContributionRoomScenario(
+            filingStatus: filingStatus,
+            personOne: PersonInput(age: ageOne, earnedIncome: incomeOne, hasWorkplacePlan: planOne, expectedEmployerContribution: employerOne, roth401kPercent: rothPercentOne, iraChoice: iraOne, hasAfterTax401k: afterTaxOne),
+            personTwo: PersonInput(age: ageTwo, earnedIncome: incomeTwo, hasWorkplacePlan: planTwo, expectedEmployerContribution: 0, roth401kPercent: 0, iraChoice: iraTwo, hasAfterTax401k: afterTaxTwo),
+            householdMAGI: magi,
+            hsaCoverage: hsa
+        )
+    }
+
+    private func account(_ name: String, owner: AccountOwner = .person(0), in scenario: ContributionRoomScenario) -> AccountRoom {
+        ContributionRoomCalculator.summary(for: scenario).accounts.first { $0.name == name && $0.owner == owner }!
+    }
+
+    @Test func contributionRoomAge50CatchUps() {
+        let scenario = contributionScenario(ageOne: 52)
+        #expect(account("401(k) elective deferral", in: scenario).limit == 24_500 + 8_000)
+        #expect(account("Roth IRA", in: scenario).limit == 8_600)
+    }
+
+    @Test func contributionRoomAge60to63SuperCatchUp() {
+        #expect(account("401(k) elective deferral", in: contributionScenario(ageOne: 61)).limit == 35_750)
+        #expect(account("401(k) elective deferral", in: contributionScenario(ageOne: 64)).limit == 32_500)
+    }
+
+    @Test func contributionRoomAge49NoCatchUp() {
+        let scenario = contributionScenario(ageOne: 49)
+        #expect(account("401(k) elective deferral", in: scenario).limit == 24_500)
+        #expect(account("Roth IRA", in: scenario).limit == 7_500)
+    }
+
+    @Test func contributionRoomHSAFamilyVsSelfOnly() {
+        #expect(account("HSA", owner: .household, in: contributionScenario(planOne: false, hsa: .family)).limit == 8_750)
+        #expect(account("HSA", owner: .household, in: contributionScenario(planOne: false, hsa: .selfOnly)).limit == 4_400)
+        #expect(account("HSA", owner: .household, in: contributionScenario(ageOne: 56, ageTwo: 56, planOne: false, hsa: .family)).limit == 10_750)
+    }
+
+    @Test func contributionRoom401kDeferralCappedByEarnedIncome() {
+        let result = account("401(k) elective deferral", in: contributionScenario(incomeOne: 10_000))
+        #expect(result.limit == 10_000)
+        #expect(result.notes.contains("Capped by earned income."))
+    }
+
+    @Test func contributionRoomAfterTaxRoom() {
+        let result = account("401(k) after-tax", in: contributionScenario(employerOne: 20_000))
+        #expect(result.limit == 27_500)
+    }
+
+    @Test func contributionRoomAfterTaxOmittedWhenToggledOff() {
+        let scenario = contributionScenario(employerOne: 20_000, afterTaxOne: false)
+        #expect(!ContributionRoomCalculator.summary(for: scenario).accounts.contains { $0.name == "401(k) after-tax" })
+    }
+
+    @Test func contributionRoomRothIRAZeroAbovePhaseOut() {
+        let result = account("Roth IRA", in: contributionScenario(magi: 300_000))
+        #expect(result.limit == 0)
+        #expect(result.notes.contains { $0.localizedCaseInsensitiveContains("backdoor") })
+    }
+
+    @Test func contributionRoomRothIRAPartialInPhaseOut() {
+        let result = account("Roth IRA", in: contributionScenario(magi: 247_000))
+        #expect(result.limit > 0 && result.limit < 7_500)
+        #expect(result.limit == 200 || result.limit.truncatingRemainder(dividingBy: 10) == 0)
+    }
+
+    @Test func contributionRoomTraditionalNotDeductibleWhenCoveredHighMAGI() {
+        let result = account("Traditional IRA", in: contributionScenario(iraOne: .traditional, magi: 200_000))
+        #expect(result.limit == 7_500)
+        #expect(result.preTax == 0)
+        #expect(result.afterTax == 7_500)
+        #expect(result.notes.contains { $0.localizedCaseInsensitiveContains("not deductible") })
+    }
+
+    @Test func contributionRoomTraditionalDeductibleWhenNoPlan() {
+        let result = account("Traditional IRA", in: contributionScenario(filingStatus: .single, planOne: false, iraOne: .traditional, magi: 200_000))
+        #expect(result.preTax == 7_500)
+        #expect(result.afterTax == 0)
+    }
+
+    @Test func contributionRoomSpousalIRAUsesCombinedEarnedIncome() {
+        let scenario = contributionScenario(incomeOne: 200_000, incomeTwo: 0)
+        #expect(account("Roth IRA", owner: .person(1), in: scenario).limit == 7_500)
+    }
+
+    @Test func contributionRoomSingleIRACappedByOwnIncome() {
+        let scenario = contributionScenario(filingStatus: .single, incomeOne: 3_000, planOne: false)
+        #expect(account("Roth IRA", in: scenario).limit == 3_000)
+    }
+
+    @Test func contributionRoomTotalsAreConsistent() {
+        let summary = ContributionRoomCalculator.summary(for: contributionScenario(ageOne: 55, planTwo: true, employerOne: 5_000, rothPercentOne: 40, iraTwo: .traditional, magi: 140_000, hsa: .family))
+        #expect(summary.totalRoom == summary.totalPreTax + summary.totalRoth + summary.totalAfterTax)
+        #expect(summary.totalRoom == summary.accounts.map(\.limit).reduce(0, +))
+    }
+
+    @Test func contributionRoomSingleFilingIgnoresPersonTwo() {
+        var scenario = contributionScenario(filingStatus: .single)
+        let original = ContributionRoomCalculator.summary(for: scenario)
+        #expect(!original.accounts.contains { $0.owner == .person(1) })
+        scenario.personTwo = PersonInput(age: 99, earnedIncome: 1, hasWorkplacePlan: true, expectedEmployerContribution: 999_999, roth401kPercent: 100, iraChoice: .traditional, hasAfterTax401k: true)
+        #expect(ContributionRoomCalculator.summary(for: scenario) == original)
+    }
+
+    @Test func contributionRoomScenarioClampsNegativeInputs() {
+        let high = PersonInput(age: -5, earnedIncome: -1, hasWorkplacePlan: true, expectedEmployerContribution: -2, roth401kPercent: 150, iraChoice: .roth, hasAfterTax401k: true)
+        let low = PersonInput(age: 150, earnedIncome: -1, hasWorkplacePlan: false, expectedEmployerContribution: -2, roth401kPercent: -20, iraChoice: .traditional, hasAfterTax401k: false)
+        let scenario = ContributionRoomScenario(filingStatus: .marriedFilingJointly, personOne: high, personTwo: low, householdMAGI: -3, hsaCoverage: .none)
+        #expect(scenario.personOne.age == 0)
+        #expect(scenario.personTwo.age == 120)
+        #expect(scenario.personOne.earnedIncome == 0 && scenario.personOne.expectedEmployerContribution == 0)
+        #expect(scenario.personOne.roth401kPercent == 100 && scenario.personTwo.roth401kPercent == 0)
+        #expect(scenario.householdMAGI == 0)
+    }
 }
