@@ -7,6 +7,7 @@ struct InvestmentCalculatorView: View {
     @AppStorage("investment.monthlyContribution") private var monthlyContribution = 500.0
     @AppStorage("investment.annualInterestRate") private var annualInterestRate = 7.0
     @AppStorage("investment.currentAge") private var currentAge = 35
+    @State private var rowComparisonMode = RowComparisonMode.yearDelta
     @FocusState private var focusedInput: InvestmentInput?
 
     private var scenario: InvestmentScenario {
@@ -45,7 +46,7 @@ struct InvestmentCalculatorView: View {
             .padding(.vertical, 24)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("Suppose Investment")
+        .navigationTitle("Investment")
         .scrollDismissesKeyboard(.interactively)
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -58,10 +59,10 @@ struct InvestmentCalculatorView: View {
     }
 
     private var inputs: some View {
-        VStack(spacing: 12) {
-            currencyField("Starting value", value: $startingValue, input: .startingValue)
-            currencyField("Monthly contribution", value: $monthlyContribution, input: .monthlyContribution)
-            percentField("Annual interest rate", value: $annualInterestRate)
+        VStack(spacing: 10) {
+            currencyField("Starting", value: $startingValue, input: .startingValue)
+            currencyField("Monthly", value: $monthlyContribution, input: .monthlyContribution)
+            percentField("Interest", value: $annualInterestRate)
             ageStepper
         }
         .padding(16)
@@ -71,9 +72,6 @@ struct InvestmentCalculatorView: View {
 
     private var summary: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Projected outcome")
-                .font(.headline)
-
             HStack(spacing: 12) {
                 metric("Final balance", value: finalBalance, style: .currency)
                 metric("Contributed", value: totalContributed, style: .currency)
@@ -98,14 +96,27 @@ struct InvestmentCalculatorView: View {
                 Text("Annual balances")
                     .font(.headline)
                 Spacer()
-                Text("Age \(currentAge + 1)-\(currentAge + scenario.projectionYears)")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
+                Button {
+                    rowComparisonMode.toggle()
+                } label: {
+                    Text(rowComparisonMode.title)
+                        .font(.caption.weight(.semibold))
+                        .monospacedDigit()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
             }
 
             LazyVStack(spacing: 8) {
                 ForEach(projection) { row in
-                    ProjectionRow(row: row, finalBalance: finalBalance)
+                    ProjectionRow(
+                        row: row,
+                        finalBalance: finalBalance,
+                        comparisonMode: rowComparisonMode
+                    )
+                    .onTapGesture {
+                        rowComparisonMode.toggle()
+                    }
                 }
             }
         }
@@ -114,11 +125,8 @@ struct InvestmentCalculatorView: View {
     private var ageStepper: some View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
-                Text("Current age")
+                Text("Age")
                     .font(.subheadline.weight(.semibold))
-                Text("Used to label each projection year")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
             Spacer()
             Stepper(value: $currentAge, in: 0...120) {
@@ -191,9 +199,63 @@ private enum MetricStyle {
     case currency
 }
 
+private enum RowComparisonMode {
+    case yearDelta
+    case previousBalance
+    case totalContributions
+    case yearlyContributions
+    case investmentGrowth
+
+    var title: String {
+        switch self {
+        case .yearDelta:
+            "Annual change"
+        case .previousBalance:
+            "Prior balance"
+        case .totalContributions:
+            "Total contributed"
+        case .yearlyContributions:
+            "Year contributed"
+        case .investmentGrowth:
+            "Growth"
+        }
+    }
+
+    var rowLabel: String {
+        switch self {
+        case .yearDelta:
+            "Change"
+        case .previousBalance:
+            "Prior"
+        case .totalContributions:
+            "Total in"
+        case .yearlyContributions:
+            "Year in"
+        case .investmentGrowth:
+            "Growth"
+        }
+    }
+
+    mutating func toggle() {
+        switch self {
+        case .yearDelta:
+            self = .previousBalance
+        case .previousBalance:
+            self = .totalContributions
+        case .totalContributions:
+            self = .yearlyContributions
+        case .yearlyContributions:
+            self = .investmentGrowth
+        case .investmentGrowth:
+            self = .yearDelta
+        }
+    }
+}
+
 private struct ProjectionRow: View {
     let row: InvestmentProjectionYear
     let finalBalance: Double
+    let comparisonMode: RowComparisonMode
 
     var body: some View {
         HStack(spacing: 14) {
@@ -213,14 +275,63 @@ private struct ProjectionRow: View {
                     .tint(.teal)
             }
 
-            Text(row.contributed.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD").precision(.fractionLength(0))))
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
-                .frame(width: 82, alignment: .trailing)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(comparisonValue)
+                    .font(.caption.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(comparisonColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Text(comparisonMode.rowLabel)
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(width: 92, alignment: .trailing)
         }
         .padding(14)
         .background(.background)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .contentShape(Rectangle())
+    }
+
+    private var comparisonValue: String {
+        switch comparisonMode {
+        case .yearDelta:
+            let sign = row.yearOverYearChange >= 0 ? "+" : ""
+            return sign + currency(row.yearOverYearChange)
+        case .previousBalance:
+            return currency(row.previousBalance)
+        case .totalContributions:
+            return currency(row.contributed)
+        case .yearlyContributions:
+            return currency(row.yearlyContributions)
+        case .investmentGrowth:
+            let sign = row.interestEarned >= 0 ? "+" : ""
+            return sign + currency(row.interestEarned)
+        }
+    }
+
+    private var comparisonColor: Color {
+        let signedValue: Double
+        switch comparisonMode {
+        case .yearDelta:
+            signedValue = row.yearOverYearChange
+        case .investmentGrowth:
+            signedValue = row.interestEarned
+        case .previousBalance, .totalContributions, .yearlyContributions:
+            return .secondary
+        }
+
+        if signedValue > 0 {
+            return .teal
+        } else if signedValue < 0 {
+            return .red
+        } else {
+            return .secondary
+        }
+    }
+
+    private func currency(_ value: Double) -> String {
+        value.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD").precision(.fractionLength(0)))
     }
 }
 

@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import Suppose
 
@@ -15,7 +16,13 @@ struct SupposeTests {
 
         #expect(projection.count == 2)
         #expect(projection[0].age == 41)
+        #expect(projection[0].previousBalance == 1_000)
+        #expect(projection[0].yearOverYearChange == 1_200)
+        #expect(projection[0].yearlyContributions == 1_200)
         #expect(projection[0].balance == 2_200)
+        #expect(projection[1].previousBalance == 2_200)
+        #expect(projection[1].yearOverYearChange == 1_200)
+        #expect(projection[1].yearlyContributions == 1_200)
         #expect(projection[1].balance == 3_400)
         #expect(projection[1].contributed == 3_400)
     }
@@ -33,6 +40,7 @@ struct SupposeTests {
 
         #expect(projection[0].balance > 16_000)
         #expect(projection[0].interestEarned > 0)
+        #expect(projection[0].yearOverYearChange == projection[0].yearlyContributions + projection[0].interestEarned)
     }
 
     @Test func negativeReturnAssumptionCanReduceBalance() {
