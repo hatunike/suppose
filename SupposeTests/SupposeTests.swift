@@ -381,4 +381,31 @@ struct SupposeTests {
         allocation.toggle()
         #expect(allocation == .sixtyForty)
     }
+
+    @Test func withdrawalRateChanceAtRanOutMatchesFailureRate() {
+        for allocation in PortfolioAllocation.allCases {
+            for rate in WithdrawalRateGrid.withdrawalRates {
+                let failure = allocation.failureRatePercent(forWithdrawalRate: rate)
+                let chance = allocation.chanceEndingBalance(atOrBelow: .ranOut, forWithdrawalRate: rate)
+                #expect(failure == chance)
+            }
+        }
+    }
+
+    @Test func withdrawalRateChanceIncreasesWithHigherThreshold() {
+        let allocation = PortfolioAllocation.sixtyForty
+        var previous = -1
+        for threshold in BalanceThreshold.allCases {
+            let chance = allocation.chanceEndingBalance(atOrBelow: threshold, forWithdrawalRate: 4.0)
+            #expect(chance >= previous)
+            #expect(chance >= 0 && chance <= 100)
+            previous = chance
+        }
+    }
+
+    @Test func withdrawalRateChanceIncreasesWithHigherWithdrawalRate() {
+        let low = PortfolioAllocation.sixtyForty.chanceEndingBalance(atOrBelow: .oneHundred, forWithdrawalRate: 3.25)
+        let high = PortfolioAllocation.sixtyForty.chanceEndingBalance(atOrBelow: .oneHundred, forWithdrawalRate: 5.00)
+        #expect(high > low)
+    }
 }

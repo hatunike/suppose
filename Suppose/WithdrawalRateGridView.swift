@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WithdrawalRateGridView: View {
     @State private var portfolio: PortfolioAllocation = .sixtyForty
+    @State private var threshold: BalanceThreshold = .ranOut
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -16,10 +17,7 @@ struct WithdrawalRateGridView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("Historical basis")
-                    .font(.subheadline.weight(.semibold))
-                Spacer()
+            controlRow(title: "Portfolio mix") {
                 Button {
                     portfolio.toggle()
                 } label: {
@@ -29,7 +27,19 @@ struct WithdrawalRateGridView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
             }
-            Text("Each cell shows the annual withdrawal for that net worth and rate. Tap a cell to see the historical chance a 30-year retirement ran out of money at that rate; tap again to go back to the dollar amount.")
+            controlRow(title: "Tap shows chance balance ends ≤") {
+                Menu {
+                    ForEach(BalanceThreshold.allCases) { option in
+                        Button(option.title) { threshold = option }
+                    }
+                } label: {
+                    Text(threshold.title)
+                        .font(.caption.weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            Text("Each cell shows the annual withdrawal for that net worth and rate. Tap a cell to see the historical chance a 30-year retirement ends at or below the selected balance; tap again to go back to the dollar amount.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -39,11 +49,21 @@ struct WithdrawalRateGridView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
+    private func controlRow(title: String, @ViewBuilder control: () -> some View) -> some View {
+        HStack {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+            Spacer()
+            control()
+        }
+    }
+
     private var gridCard: some View {
         FrozenPaneGrid(
             netWorths: WithdrawalRateGrid.netWorths,
             rates: WithdrawalRateGrid.withdrawalRates,
-            portfolio: portfolio
+            portfolio: portfolio,
+            threshold: threshold
         )
         .padding(12)
         .background(.background)
@@ -60,6 +80,7 @@ private struct FrozenPaneGrid: View {
     let netWorths: [Double]
     let rates: [Double]
     let portfolio: PortfolioAllocation
+    let threshold: BalanceThreshold
 
     private let labelColumnWidth: CGFloat = 78
     private let cellWidth: CGFloat = 66
@@ -141,7 +162,7 @@ private struct FrozenPaneGrid: View {
             ForEach(netWorths, id: \.self) { netWorth in
                 HStack(spacing: 0) {
                     ForEach(rates, id: \.self) { rate in
-                        WithdrawalCell(netWorth: netWorth, ratePercent: rate, portfolio: portfolio)
+                        WithdrawalCell(netWorth: netWorth, ratePercent: rate, portfolio: portfolio, threshold: threshold)
                             .frame(width: cellWidth, height: rowHeight)
                     }
                 }
@@ -154,14 +175,15 @@ private struct WithdrawalCell: View {
     let netWorth: Double
     let ratePercent: Double
     let portfolio: PortfolioAllocation
+    let threshold: BalanceThreshold
     @State private var isRevealed = false
 
-    private var failureRate: Int {
-        portfolio.failureRatePercent(forWithdrawalRate: ratePercent)
+    private var chancePercent: Int {
+        portfolio.chanceEndingBalance(atOrBelow: threshold, forWithdrawalRate: ratePercent)
     }
 
-    private var failureColor: Color {
-        switch failureRate {
+    private var chanceColor: Color {
+        switch chancePercent {
         case ..<5: .teal
         case 5..<15: .orange
         default: .red
@@ -174,8 +196,8 @@ private struct WithdrawalCell: View {
         } label: {
             Group {
                 if isRevealed {
-                    Text("\(failureRate)%")
-                        .foregroundStyle(failureColor)
+                    Text("\(chancePercent)%")
+                        .foregroundStyle(chanceColor)
                 } else {
                     Text(currency(WithdrawalRateGrid.annualWithdrawal(netWorth: netWorth, ratePercent: ratePercent)))
                         .foregroundStyle(.primary)
