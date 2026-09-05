@@ -342,4 +342,34 @@ struct SupposeTests {
         #expect(scenario.personOne.roth401kPercent == 100 && scenario.personTwo.roth401kPercent == 0)
         #expect(scenario.householdMAGI == 0)
     }
+
+    @Test func withdrawalRateAnnualWithdrawalScalesWithNetWorthAndRate() {
+        #expect(WithdrawalRateGrid.annualWithdrawal(netWorth: 1_000_000, ratePercent: 4.0) == 40_000)
+        #expect(WithdrawalRateGrid.annualWithdrawal(netWorth: 2_500_000, ratePercent: 3.25) == 81_250)
+    }
+
+    @Test func withdrawalRateFailureRateIncreasesWithRate() {
+        let low = PortfolioAllocation.sixtyForty.failureRatePercent(forWithdrawalRate: 3.25)
+        let high = PortfolioAllocation.sixtyForty.failureRatePercent(forWithdrawalRate: 5.00)
+        #expect(low < high)
+    }
+
+    @Test func withdrawalRateFailureRateLooksUpEachAllocation() {
+        for allocation in PortfolioAllocation.allCases {
+            for rate in WithdrawalRateGrid.withdrawalRates {
+                let failureRate = allocation.failureRatePercent(forWithdrawalRate: rate)
+                #expect(failureRate >= 0 && failureRate <= 100)
+            }
+        }
+    }
+
+    @Test func withdrawalRateAllocationTogglesThroughAllCases() {
+        var allocation = PortfolioAllocation.sixtyForty
+        allocation.toggle()
+        #expect(allocation == .seventyFiveTwentyFive)
+        allocation.toggle()
+        #expect(allocation == .allStock)
+        allocation.toggle()
+        #expect(allocation == .sixtyForty)
+    }
 }

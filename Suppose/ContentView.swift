@@ -33,6 +33,8 @@ struct ContentView: View {
                 MortgageCalculatorView()
             case .contributionRoom:
                 ContributionRoomCalculatorView()
+            case .withdrawalRate:
+                WithdrawalRateGridView()
             }
         }
     }
