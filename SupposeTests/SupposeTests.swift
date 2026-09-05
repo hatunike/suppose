@@ -343,6 +343,15 @@ struct SupposeTests {
         #expect(scenario.householdMAGI == 0)
     }
 
+    @Test func withdrawalRateNetWorthRowsAreFlatHundredThousandSteps() {
+        let netWorths = WithdrawalRateGrid.netWorths
+        #expect(netWorths.first == 300_000)
+        #expect(netWorths.last == 10_000_000)
+        for index in 1..<netWorths.count {
+            #expect(netWorths[index] - netWorths[index - 1] == 100_000)
+        }
+    }
+
     @Test func withdrawalRateAnnualWithdrawalScalesWithNetWorthAndRate() {
         #expect(WithdrawalRateGrid.annualWithdrawal(netWorth: 1_000_000, ratePercent: 4.0) == 40_000)
         #expect(WithdrawalRateGrid.annualWithdrawal(netWorth: 2_500_000, ratePercent: 3.25) == 81_250)

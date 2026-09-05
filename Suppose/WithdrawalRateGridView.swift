@@ -4,14 +4,12 @@ struct WithdrawalRateGridView: View {
     @State private var portfolio: PortfolioAllocation = .sixtyForty
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
-                header
-                grid
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 24)
+        VStack(alignment: .leading, spacing: 16) {
+            header
+            gridCard
         }
+        .padding(.horizontal, 20)
+        .padding(.top, 24)
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Withdrawal Rate")
     }
@@ -41,39 +39,114 @@ struct WithdrawalRateGridView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
-    private var grid: some View {
-        ScrollView(.horizontal) {
-            Grid(horizontalSpacing: 6, verticalSpacing: 6) {
-                GridRow {
-                    Text("Net worth")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 72, alignment: .leading)
-                    ForEach(WithdrawalRateGrid.withdrawalRates, id: \.self) { rate in
-                        Text(ratePercentLabel(rate))
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 64)
+    private var gridCard: some View {
+        FrozenPaneGrid(
+            netWorths: WithdrawalRateGrid.netWorths,
+            rates: WithdrawalRateGrid.withdrawalRates,
+            portfolio: portfolio
+        )
+        .padding(12)
+        .background(.background)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .frame(maxHeight: .infinity)
+    }
+}
+
+/// A grid with a pinned top header row and pinned first column, so both stay
+/// visible while the body scrolls in either direction — like a spreadsheet's
+/// frozen panes. The header/column each mirror the body's scroll offset along
+/// the axis they don't freeze, via `onScrollGeometryChange`.
+private struct FrozenPaneGrid: View {
+    let netWorths: [Double]
+    let rates: [Double]
+    let portfolio: PortfolioAllocation
+
+    private let labelColumnWidth: CGFloat = 78
+    private let cellWidth: CGFloat = 66
+    private let headerHeight: CGFloat = 32
+    private let rowHeight: CGFloat = 52
+
+    @State private var contentOffset: CGPoint = .zero
+
+    private var contentWidth: CGFloat { cellWidth * CGFloat(rates.count) }
+    private var contentHeight: CGFloat { rowHeight * CGFloat(netWorths.count) }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let bodyWidth = max(0, proxy.size.width - labelColumnWidth)
+            let bodyHeight = max(0, proxy.size.height - headerHeight)
+
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    cornerCell
+                    headerRow
+                        .offset(x: -contentOffset.x)
+                        .frame(width: contentWidth, height: headerHeight, alignment: .topLeading)
+                        .frame(width: bodyWidth, height: headerHeight, alignment: .topLeading)
+                        .clipped()
+                }
+                HStack(spacing: 0) {
+                    leftColumn
+                        .offset(y: -contentOffset.y)
+                        .frame(width: labelColumnWidth, height: contentHeight, alignment: .topLeading)
+                        .frame(width: labelColumnWidth, height: bodyHeight, alignment: .topLeading)
+                        .clipped()
+                    ScrollView([.horizontal, .vertical]) {
+                        bodyGrid
                     }
-                }
-                GridRow {
-                    Divider().gridCellColumns(WithdrawalRateGrid.withdrawalRates.count + 1)
-                }
-                ForEach(WithdrawalRateGrid.netWorths, id: \.self) { netWorth in
-                    GridRow {
-                        Text(shortCurrency(netWorth))
-                            .font(.caption.weight(.semibold).monospacedDigit())
-                            .frame(width: 72, alignment: .leading)
-                        ForEach(WithdrawalRateGrid.withdrawalRates, id: \.self) { rate in
-                            WithdrawalCell(netWorth: netWorth, ratePercent: rate, portfolio: portfolio)
-                        }
+                    .frame(width: bodyWidth, height: bodyHeight)
+                    .onScrollGeometryChange(for: CGPoint.self) { geometry in
+                        geometry.contentOffset
+                    } action: { _, newValue in
+                        contentOffset = newValue
                     }
                 }
             }
         }
-        .padding(16)
+    }
+
+    private var cornerCell: some View {
+        Text("Net worth")
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .frame(width: labelColumnWidth, height: headerHeight, alignment: .leading)
+            .background(.background)
+    }
+
+    private var headerRow: some View {
+        HStack(spacing: 0) {
+            ForEach(rates, id: \.self) { rate in
+                Text(ratePercentLabel(rate))
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: cellWidth, height: headerHeight)
+            }
+        }
         .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private var leftColumn: some View {
+        VStack(spacing: 0) {
+            ForEach(netWorths, id: \.self) { netWorth in
+                Text(shortCurrency(netWorth))
+                    .font(.caption.weight(.semibold).monospacedDigit())
+                    .frame(width: labelColumnWidth, height: rowHeight, alignment: .leading)
+            }
+        }
+        .background(.background)
+    }
+
+    private var bodyGrid: some View {
+        VStack(spacing: 0) {
+            ForEach(netWorths, id: \.self) { netWorth in
+                HStack(spacing: 0) {
+                    ForEach(rates, id: \.self) { rate in
+                        WithdrawalCell(netWorth: netWorth, ratePercent: rate, portfolio: portfolio)
+                            .frame(width: cellWidth, height: rowHeight)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -111,7 +184,8 @@ private struct WithdrawalCell: View {
             .font(.caption.weight(.semibold).monospacedDigit())
             .lineLimit(1)
             .minimumScaleFactor(0.75)
-            .frame(width: 64)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

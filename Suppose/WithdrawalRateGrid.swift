@@ -2,14 +2,8 @@ import Foundation
 
 /// The reference grid: net worth rows crossed with withdrawal-rate columns.
 enum WithdrawalRateGrid {
-    /// Net worth rows, graduated from $300k to $10m: $100k steps to $1m, $250k steps
-    /// to $2m, $500k steps to $5m, then $1m steps to $10m.
-    static let netWorths: [Double] = [
-        300_000, 400_000, 500_000, 600_000, 700_000, 800_000, 900_000, 1_000_000,
-        1_250_000, 1_500_000, 1_750_000, 2_000_000,
-        2_500_000, 3_000_000, 3_500_000, 4_000_000, 4_500_000, 5_000_000,
-        6_000_000, 7_000_000, 8_000_000, 9_000_000, 10_000_000,
-    ]
+    /// Net worth rows, in flat $100k steps from $300k to $10m.
+    static let netWorths: [Double] = Array(stride(from: 300_000.0, through: 10_000_000.0, by: 100_000.0))
 
     /// Withdrawal rates, as a percentage (4.00 means 4%), from 3.25% to 5.00%.
     static let withdrawalRates: [Double] = [3.25, 3.50, 3.75, 4.00, 4.25, 4.50, 4.75, 5.00]
