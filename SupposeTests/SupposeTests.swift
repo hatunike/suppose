@@ -408,4 +408,22 @@ struct SupposeTests {
         let high = PortfolioAllocation.sixtyForty.chanceEndingBalance(atOrBelow: .oneHundred, forWithdrawalRate: 5.00)
         #expect(high > low)
     }
+
+    @Test func withdrawalRateAtOrAboveIsComplementOfAtOrBelow() {
+        for allocation in PortfolioAllocation.allCases {
+            for threshold in BalanceThreshold.allCases {
+                let below = allocation.chanceEndingBalance(.atOrBelow, threshold: threshold, forWithdrawalRate: 4.0)
+                let above = allocation.chanceEndingBalance(.atOrAbove, threshold: threshold, forWithdrawalRate: 4.0)
+                #expect(below + above == 100)
+            }
+        }
+    }
+
+    @Test func withdrawalRateComparisonDirectionToggles() {
+        var direction = ComparisonDirection.atOrBelow
+        direction.toggle()
+        #expect(direction == .atOrAbove)
+        direction.toggle()
+        #expect(direction == .atOrBelow)
+    }
 }

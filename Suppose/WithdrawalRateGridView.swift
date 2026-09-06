@@ -3,6 +3,7 @@ import SwiftUI
 struct WithdrawalRateGridView: View {
     @State private var portfolio: PortfolioAllocation = .sixtyForty
     @State private var threshold: BalanceThreshold = .ranOut
+    @State private var direction: ComparisonDirection = .atOrBelow
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -27,19 +28,30 @@ struct WithdrawalRateGridView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
             }
-            controlRow(title: "Tap shows chance balance ends ≤") {
-                Menu {
-                    ForEach(BalanceThreshold.allCases) { option in
-                        Button(option.title) { threshold = option }
+            controlRow(title: "Tap shows chance balance ends") {
+                HStack(spacing: 8) {
+                    Button {
+                        direction.toggle()
+                    } label: {
+                        Text(direction.symbol)
+                            .font(.caption.weight(.bold))
                     }
-                } label: {
-                    Text(threshold.title)
-                        .font(.caption.weight(.semibold))
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+
+                    Menu {
+                        ForEach(BalanceThreshold.allCases) { option in
+                            Button(option.title) { threshold = option }
+                        }
+                    } label: {
+                        Text(threshold.title)
+                            .font(.caption.weight(.semibold))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
             }
-            Text("Each cell shows the annual withdrawal for that net worth and rate. Tap a cell to see the historical chance a 30-year retirement ends at or below the selected balance; tap again to go back to the dollar amount.")
+            Text("Each cell shows the annual withdrawal for that net worth and rate. Tap a cell to see the historical chance a 30-year retirement's ending balance is at or below (≤) or at or above (≥) the selected threshold; tap again to go back to the dollar amount.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -63,7 +75,8 @@ struct WithdrawalRateGridView: View {
             netWorths: WithdrawalRateGrid.netWorths,
             rates: WithdrawalRateGrid.withdrawalRates,
             portfolio: portfolio,
-            threshold: threshold
+            threshold: threshold,
+            direction: direction
         )
         .padding(12)
         .background(.background)
@@ -81,6 +94,7 @@ private struct FrozenPaneGrid: View {
     let rates: [Double]
     let portfolio: PortfolioAllocation
     let threshold: BalanceThreshold
+    let direction: ComparisonDirection
 
     private let labelColumnWidth: CGFloat = 78
     private let cellWidth: CGFloat = 66
@@ -162,7 +176,7 @@ private struct FrozenPaneGrid: View {
             ForEach(netWorths, id: \.self) { netWorth in
                 HStack(spacing: 0) {
                     ForEach(rates, id: \.self) { rate in
-                        WithdrawalCell(netWorth: netWorth, ratePercent: rate, portfolio: portfolio, threshold: threshold)
+                        WithdrawalCell(netWorth: netWorth, ratePercent: rate, portfolio: portfolio, threshold: threshold, direction: direction)
                             .frame(width: cellWidth, height: rowHeight)
                     }
                 }
@@ -176,10 +190,11 @@ private struct WithdrawalCell: View {
     let ratePercent: Double
     let portfolio: PortfolioAllocation
     let threshold: BalanceThreshold
+    let direction: ComparisonDirection
     @State private var isRevealed = false
 
     private var chancePercent: Int {
-        portfolio.chanceEndingBalance(atOrBelow: threshold, forWithdrawalRate: ratePercent)
+        portfolio.chanceEndingBalance(direction, threshold: threshold, forWithdrawalRate: ratePercent)
     }
 
     private var chanceColor: Color {

@@ -78,6 +78,36 @@ enum PortfolioAllocation: String, CaseIterable, Identifiable, Hashable {
         let combined = failure + (100 - failure) * survivorChance
         return Int(min(100, max(0, combined)).rounded())
     }
+
+    /// The historical chance (%) that a 30-year retirement's ending balance compares
+    /// to `threshold` as `direction` says — e.g. `.atOrAbove` at 100% is the chance of
+    /// at least breaking even. `.atOrAbove` is the complement of `.atOrBelow`.
+    func chanceEndingBalance(_ direction: ComparisonDirection, threshold: BalanceThreshold, forWithdrawalRate ratePercent: Double) -> Int {
+        let atOrBelow = chanceEndingBalance(atOrBelow: threshold, forWithdrawalRate: ratePercent)
+        switch direction {
+        case .atOrBelow: return atOrBelow
+        case .atOrAbove: return 100 - atOrBelow
+        }
+    }
+}
+
+/// Which side of a `BalanceThreshold` a grid cell's revealed percentage represents.
+enum ComparisonDirection: String, CaseIterable, Identifiable, Hashable {
+    case atOrBelow
+    case atOrAbove
+
+    var id: String { rawValue }
+
+    var symbol: String {
+        switch self {
+        case .atOrBelow: "≤"
+        case .atOrAbove: "≥"
+        }
+    }
+
+    mutating func toggle() {
+        self = self == .atOrBelow ? .atOrAbove : .atOrBelow
+    }
 }
 
 /// A target ending balance, as a percentage of the original starting balance, that a
