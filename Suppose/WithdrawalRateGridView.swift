@@ -6,12 +6,14 @@ struct WithdrawalRateGridView: View {
     @State private var direction: ComparisonDirection = .atOrBelow
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            header
-            gridCard
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                header
+                gridCard
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 24)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 24)
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Withdrawal Rate")
     }
@@ -81,14 +83,16 @@ struct WithdrawalRateGridView: View {
         .padding(12)
         .background(.background)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .frame(maxHeight: .infinity)
     }
 }
 
-/// A grid with a pinned top header row and pinned first column, so both stay
-/// visible while the body scrolls in either direction — like a spreadsheet's
-/// frozen panes. The header/column each mirror the body's scroll offset along
-/// the axis they don't freeze, via `onScrollGeometryChange`.
+/// A grid with a top header row pinned to the top of the page as it scrolls past, and
+/// a first column pinned to the left as the body scrolls horizontally — like a
+/// spreadsheet's frozen panes — while otherwise scrolling as ordinary page content
+/// (so the surrounding header/toggles scroll away too, instead of being stuck on screen).
+/// The header row mirrors the body's horizontal scroll offset via `onScrollGeometryChange`
+/// since it lives outside the body's own horizontal `ScrollView`; the left column needs no
+/// such tracking since vertical scrolling is just the page's, not a separate region.
 private struct FrozenPaneGrid: View {
     let netWorths: [Double]
     let rates: [Double]
@@ -101,43 +105,41 @@ private struct FrozenPaneGrid: View {
     private let headerHeight: CGFloat = 32
     private let rowHeight: CGFloat = 52
 
-    @State private var contentOffset: CGPoint = .zero
+    @State private var horizontalOffset: CGFloat = 0
 
     private var contentWidth: CGFloat { cellWidth * CGFloat(rates.count) }
-    private var contentHeight: CGFloat { rowHeight * CGFloat(netWorths.count) }
 
     var body: some View {
         GeometryReader { proxy in
             let bodyWidth = max(0, proxy.size.width - labelColumnWidth)
-            let bodyHeight = max(0, proxy.size.height - headerHeight)
 
-            VStack(spacing: 0) {
-                HStack(spacing: 0) {
-                    cornerCell
-                    headerRow
-                        .offset(x: -contentOffset.x)
-                        .frame(width: contentWidth, height: headerHeight, alignment: .topLeading)
-                        .frame(width: bodyWidth, height: headerHeight, alignment: .topLeading)
-                        .clipped()
-                }
-                HStack(spacing: 0) {
-                    leftColumn
-                        .offset(y: -contentOffset.y)
-                        .frame(width: labelColumnWidth, height: contentHeight, alignment: .topLeading)
-                        .frame(width: labelColumnWidth, height: bodyHeight, alignment: .topLeading)
-                        .clipped()
-                    ScrollView([.horizontal, .vertical]) {
-                        bodyGrid
+            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                Section {
+                    HStack(alignment: .top, spacing: 0) {
+                        leftColumn
+                        ScrollView(.horizontal) {
+                            bodyGrid
+                        }
+                        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                            geometry.contentOffset.x
+                        } action: { _, newValue in
+                            horizontalOffset = newValue
+                        }
                     }
-                    .frame(width: bodyWidth, height: bodyHeight)
-                    .onScrollGeometryChange(for: CGPoint.self) { geometry in
-                        geometry.contentOffset
-                    } action: { _, newValue in
-                        contentOffset = newValue
+                } header: {
+                    HStack(spacing: 0) {
+                        cornerCell
+                        headerRow
+                            .offset(x: -horizontalOffset)
+                            .frame(width: contentWidth, height: headerHeight, alignment: .topLeading)
+                            .frame(width: bodyWidth, height: headerHeight, alignment: .topLeading)
+                            .clipped()
                     }
+                    .background(.background)
                 }
             }
         }
+        .frame(height: headerHeight + rowHeight * CGFloat(netWorths.count))
     }
 
     private var cornerCell: some View {
@@ -145,7 +147,6 @@ private struct FrozenPaneGrid: View {
             .font(.caption2.weight(.semibold))
             .foregroundStyle(.secondary)
             .frame(width: labelColumnWidth, height: headerHeight, alignment: .leading)
-            .background(.background)
     }
 
     private var headerRow: some View {
@@ -157,7 +158,6 @@ private struct FrozenPaneGrid: View {
                     .frame(width: cellWidth, height: headerHeight)
             }
         }
-        .background(.background)
     }
 
     private var leftColumn: some View {
@@ -168,7 +168,6 @@ private struct FrozenPaneGrid: View {
                     .frame(width: labelColumnWidth, height: rowHeight, alignment: .leading)
             }
         }
-        .background(.background)
     }
 
     private var bodyGrid: some View {
