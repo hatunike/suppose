@@ -426,4 +426,24 @@ struct SupposeTests {
         direction.toggle()
         #expect(direction == .atOrBelow)
     }
+
+    @Test func historicalMarketReturnsCoverEveryYearInRange() {
+        let years = HistoricalMarketReturns.years
+        #expect(years.first?.year == 1928)
+        #expect(years.last?.year == 2025)
+        for index in 1..<years.count {
+            #expect(years[index].year == years[index - 1].year + 1)
+        }
+    }
+
+    @Test func historicalMarketReturnRealReturnUsesFisherEquation() {
+        let year = HistoricalMarketYear(year: 2000, nominalReturnPercent: 10, inflationRatePercent: 4)
+        let expected = ((1.10 / 1.04) - 1) * 100
+        #expect(abs(year.realReturnPercent - expected) < 0.0001)
+    }
+
+    @Test func historicalMarketReturnRealReturnIsZeroWhenNominalMatchesInflation() {
+        let year = HistoricalMarketYear(year: 2000, nominalReturnPercent: 5, inflationRatePercent: 5)
+        #expect(abs(year.realReturnPercent) < 0.0001)
+    }
 }

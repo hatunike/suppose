@@ -35,6 +35,8 @@ struct ContentView: View {
                 ContributionRoomCalculatorView()
             case .withdrawalRate:
                 WithdrawalRateGridView()
+            case .marketHistory:
+                HistoricalReturnsView()
             }
         }
     }

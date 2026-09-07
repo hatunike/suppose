@@ -5,6 +5,7 @@ enum FinancialTool: String, CaseIterable, Identifiable {
     case mortgage
     case contributionRoom
     case withdrawalRate
+    case marketHistory
 
     var id: String {
         rawValue
@@ -20,6 +21,8 @@ enum FinancialTool: String, CaseIterable, Identifiable {
             "Contribution Room"
         case .withdrawalRate:
             "Withdrawal Rate"
+        case .marketHistory:
+            "Market History"
         }
     }
 
@@ -33,6 +36,8 @@ enum FinancialTool: String, CaseIterable, Identifiable {
             "See the 2026 tax-advantaged accounts a household can use and how much room each one has."
         case .withdrawalRate:
             "Look up what a withdrawal rate pays out at a given net worth, and its historical 30-year failure rate."
+        case .marketHistory:
+            "Look up the S&P 500's nominal return, inflation, and real return for every year since 1928."
         }
     }
 
@@ -46,6 +51,8 @@ enum FinancialTool: String, CaseIterable, Identifiable {
             "building.columns.fill"
         case .withdrawalRate:
             "percent"
+        case .marketHistory:
+            "tablecells"
         }
     }
 }
